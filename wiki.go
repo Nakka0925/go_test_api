@@ -1,10 +1,10 @@
 package main
 
 import (
-	"html/template"
 	"net/http"
 	"os"
 	"regexp"
+	"text/template"
 )
 
 // PageはWikiの各ページを表します
@@ -29,12 +29,12 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-// テンプレートのパース（edit.html, view.html）
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+func getTemplates() *template.Template {
+	return template.Must(template.ParseFiles("html/edit.html", "html/view.html"))
+}
 
-// 指定のテンプレートにデータを適用してレンダリングする
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	// htmlにGoのpデータを渡している
+	templates := getTemplates()
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -45,7 +45,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 // ハンドラーをラップし、URLからタイトル部分を抽出する
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func MakeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
@@ -57,7 +57,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 }
 
 // ページの閲覧
-func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+func ViewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -67,7 +67,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 // ページの編集
-func editHandler(w http.ResponseWriter, r *http.Request, title string) {
+func EditHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
@@ -76,7 +76,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 // ページの保存
-func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+func SaveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	err := p.save()
@@ -88,8 +88,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func main() {
-	http.HandleFunc("/view/", makeHandler(viewHandler))
-	http.HandleFunc("/edit/", makeHandler(editHandler))
-	http.HandleFunc("/save/", makeHandler(saveHandler))
+	http.HandleFunc("/view/", MakeHandler(ViewHandler))
+	http.HandleFunc("/edit/", MakeHandler(EditHandler))
+	http.HandleFunc("/save/", MakeHandler(SaveHandler))
 	http.ListenAndServe(":8080", nil)
 }
