@@ -15,13 +15,13 @@ type Page struct {
 
 // ページ内容をファイルに保存する
 func (p *Page) save() error {
-	filename := p.Title + ".txt"
+	filename := "text_dir/" + p.Title + ".txt"
 	return os.WriteFile(filename, p.Body, 0600)
 }
 
 // ファイルからページ内容を読み込む
 func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
+	filename := "text_dir/" + title + ".txt"
 	body, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -34,6 +34,7 @@ var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
 
 // 指定のテンプレートにデータを適用してレンダリングする
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+	// htmlにGoのpデータを渡している
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
