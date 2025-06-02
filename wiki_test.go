@@ -10,6 +10,7 @@ type WikiTestSuite struct {
 	suite.Suite
 }
 
+// テストのエントリーポイント
 func TestWikiSuite(t *testing.T) {
 	suite.Run(t, new(WikiTestSuite))
 }
@@ -31,4 +32,8 @@ func (s *WikiTestSuite) TestPlay() {
 		s.Equal(p.Title, loaded.Title, "タイトルが一致すること")
 		s.Equal(p.Body, loaded.Body, "本文が一致すること")
 	})
+
+	// s.Run("viewが表示されるかの確認", func() {
+
+	// })
 }
